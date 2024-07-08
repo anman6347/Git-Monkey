@@ -1,10 +1,14 @@
 CXX = g++
 CXXFLAGS = 
-#TARGET_ADD = add
+INCDIR = "C:\\Program Files\\OpenSSL-Win64\\include"
+LIBDIR = "C:\\Program Files\\OpenSSL-Win64\\lib"
+#LIBS = -lssl -lcrypto
+LIBS = "C:\\Program Files\\OpenSSL-Win64\\lib\\VC\\x64\\MT\\libcrypto.lib" 
 SRCS = MiniGit.cpp Add.cpp Init.cpp
-#OBJS := $(OBJS:%.cpp=%.o)
-OBJS = $(SRCS:%.cpp=%.o)
 TARGET := $(SRCS:%.cpp=%.exe)
+SRCS +=  Crypt.cpp
+OBJS = $(SRCS:%.cpp=%.o)
+
 
 #comma:= ,
 #empty:=
@@ -16,11 +20,20 @@ TARGET := $(SRCS:%.cpp=%.exe)
 
 all: $(TARGET)
 
-%.exe: %.o
-	$(CXX) $^ -o $@
+#%.exe: %.o
+#	$(CXX) $^ -o $@
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $^ -o $@
+
+MiniGit.exe: MiniGit.o
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
+Init.exe: Init.o
+	$(CXX) $(CXXFLAGS) $^ -o $@
+
+Add.exe: Add.o Crypt.o
+	$(CXX) $(CXXFLAGS) $^ -o $@ -lbcrypt -lz
 
 run: $(TARGET)
 	cd ..\testspace && MiniGit add -A && cd ..\Xass
@@ -32,4 +45,4 @@ run: $(TARGET)
 #	cd ..\Xass
 
 clean:
-	del $(TARGET)
+	del $(TARGET) $(OBJS)
