@@ -139,9 +139,10 @@ int main(int argc, char **argv)
         //     writing_file.write((char *)(&u), sizeof(unsigned char));
         // }
         // writing_file.close();
-        const char *In = file_name.c_str();
+        //const char *In = file_name.c_str();
         const char *Out = out_file_name.c_str();
-        do_compress(In, Out);   // zlib 圧縮
+        //do_compress(In, Out);   // zlib 圧縮
+        do_compress2(blob_raw_data, Out);   // zlib 圧縮
     }
 
     return 0;

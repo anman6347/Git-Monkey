@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <cstdlib>
+#include <vector>
 #include <zlib.h>
 
 #define INBUFSIZ   65536                 // 入力バッファサイズ（任意）
@@ -156,6 +157,79 @@ void do_decompress(char *in_file, char *out_file){
                 return;
         }
         fclose(fin);
+        fclose(fout);
+        return;
+}
+
+// 圧縮
+void do_compress2(std::vector<unsigned char> &in, const char *out_file){
+        unsigned char *inbuf = in.data(); 
+        unsigned char outbuf[OUTBUFSIZ];         // 出力バッファ
+        char err_msg[250];
+        FILE *fout;       // 入力・出力ファイル
+        z_stream z;             // ライブラリとやりとりするための構造体
+        int count, flush, status;
+        if (!(fout = fopen(out_file, "wb"))) return;
+
+        // すべてのメモリ管理をライブラリに任せる
+        z.zalloc = Z_NULL;
+        z.zfree = Z_NULL;
+        z.opaque = Z_NULL;
+
+        // 初期化  圧縮レベル 1
+        if (deflateInit(&z, 1) != Z_OK) {
+                sprintf(err_msg, "圧縮初期化エラー（deflateInit関数）: %s\n", (z.msg) ? z.msg : "???");
+                fclose(fout);
+                return;
+        }
+
+        z.avail_in = 0;                         // 入力バッファ中のデータのバイト数
+        z.next_out = outbuf;            // 出力ポインタ
+        z.avail_out = OUTBUFSIZ;        // 出力バッファのサイズ
+
+        // 通常は deflate() の第2引数は Z_NO_FLUSH にして呼び出す
+        flush = Z_NO_FLUSH;
+
+        while (1) {
+                if (z.avail_in == 0) {  // 入力が尽きれば
+                        z.next_in = inbuf;      // 入力ポインタを入力バッファの先頭に
+                        z.avail_in = in.size();
+
+                        // 入力が最後になったら deflate() の第2引数は Z_FINISH にする
+                        if (z.avail_in < INBUFSIZ) flush = Z_FINISH;
+                }
+                status = deflate(&z, flush); // 圧縮する
+                if (status == Z_STREAM_END) break; // 完了
+                if (status != Z_OK) {   // エラー
+                        sprintf(err_msg, "圧縮エラー（deflate関数）: %s\n", (z.msg) ? z.msg : "???");
+                        fclose(fout);
+                        return;
+                }
+                if (z.avail_out == 0) { // 出力バッファが尽きれば
+                        // まとめて書き出す
+                        if (fwrite(outbuf, 1, OUTBUFSIZ, fout) != OUTBUFSIZ) {
+                                fclose(fout);
+                                return;
+                        }
+                        z.next_out = outbuf; // 出力バッファ残量を元に戻す
+                        z.avail_out = OUTBUFSIZ; // 出力ポインタを元に戻す
+                }
+        }
+
+        // 残りを吐き出す
+        if ((count = OUTBUFSIZ - z.avail_out) != 0) {
+                if (fwrite(outbuf, 1, count, fout) != count) {
+                        fclose(fout);
+                        return;
+                }
+        }
+
+        // 後始末
+        if (deflateEnd(&z) != Z_OK) {
+                sprintf(err_msg, "圧縮完了エラー（deflateEnd関数）: %s\n", (z.msg) ? z.msg : "???");
+                fclose(fout);
+                return;
+        }
         fclose(fout);
         return;
 }
