@@ -17,6 +17,7 @@ const char* builtin_str[] = {
     "status"
 };
 
+// return the number of built-in commands
 int num_builtins() {
     return sizeof(builtin_str) / sizeof(char*);
 }
@@ -40,26 +41,32 @@ int cmd_launch(char **args) {
     commandLine[0] = toupper(commandLine[0]);
 
 
-    // e.g. "add" -> "Add.exe"
-    //char cmd[64];
-    //sprintf(cmd, "%s%s", args[1], ".exe\0");
-    //sprintf(cmd, "%s%s", args[1], "\0");
-    //cmd[0] = toupper(cmd[0]);
-    //std::cout << cmd << std::endl;
+
+    /* Get full path of the currently executing executable
+    char MiniGitPath[256] = {'\0'};
+    GetModuleFileName(
+        NULL,                                           // Get full path of the currently executing executable
+        MiniGitPath,                                    // buffer
+        sizeof(MiniGitPath) / sizeof(MiniGitPath[0])    // buffer size
+    );
+    std::cout << MiniGitPath << std::endl;
+    */
 
     STARTUPINFO si = {sizeof(STARTUPINFO)};
     PROCESS_INFORMATION pi = {};
     if(!CreateProcess(
-           NULL,   // PATH から commandLine にあるコマンドを探す
-           commandLine,
-           NULL,   //プロセスのセキュリティー記述子
-           NULL,   //スレッドのセキュリティー記述子
-           FALSE,  //ハンドルを継承しない
-           0,      //作成フラグ
-           NULL,   //環境変数は引き継ぐ
-           NULL,   //カレントディレクトリーは同じ
-           &si,
-           &pi)) {
+            NULL,   // The first white space–delimited token of the command line specifies the module name.
+                    // If the file name does not contain a directory path, the system searches for the executable file
+                    // in the directory from which the application loaded.
+            commandLine,
+            NULL,   //プロセスのセキュリティー記述子
+            NULL,   //スレッドのセキュリティー記述子
+            FALSE,  //ハンドルを継承しない
+            0,      //作成フラグ
+            NULL,   //環境変数は引き継ぐ
+            NULL,   //カレントディレクトリーは同じ
+            &si,
+            &pi)) {
         fprintf(stderr, "command executing error\n");
         return -1;
     }

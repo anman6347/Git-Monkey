@@ -1,9 +1,7 @@
 CXX = g++
 CXXFLAGS = 
-INCDIR = "C:\\Program Files\\OpenSSL-Win64\\include"
-LIBDIR = "C:\\Program Files\\OpenSSL-Win64\\lib"
-#LIBS = -lssl -lcrypto
-LIBS = "C:\\Program Files\\OpenSSL-Win64\\lib\\VC\\x64\\MT\\libcrypto.lib" 
+INCDIR = ".\\zlib-1.3.1"
+LIBDIR = ".\\zlib-1.3.1"
 SRCS = MiniGit.cpp Add.cpp Init.cpp
 TARGET := $(SRCS:%.cpp=%.exe)
 SRCS +=  Crypt.cpp
@@ -24,7 +22,7 @@ all: $(TARGET)
 #	$(CXX) $^ -o $@
 
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $^ -o $@
+	$(CXX) $(CXXFLAGS) -I $(INCDIR) -c $^ -o $@
 
 MiniGit.exe: MiniGit.o
 	$(CXX) $(CXXFLAGS) $^ -o $@
@@ -33,10 +31,11 @@ Init.exe: Init.o
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
 Add.exe: Add.o Crypt.o
-	$(CXX) $(CXXFLAGS) $^ -o $@ -lbcrypt -lz
+	$(CXX) $(CXXFLAGS) -L $(LIBDIR) $^ -o $@ -lbcrypt -lz
 
 run: $(TARGET)
-	cd ..\testspace && MiniGit add -A && cd ..\Xass
+	cd ..\testspace && ..\Xass\MiniGit.exe init && ..\Xass\MiniGit.exe add -A && cd ..\Xass
+
 # del /Q .\*
 #	del /Q ..\testspace\* 
 #	copy *.exe ..\testspace
@@ -46,3 +45,4 @@ run: $(TARGET)
 
 clean:
 	del $(TARGET) $(OBJS)
+	rmdir /s /q ..\testspace\.git

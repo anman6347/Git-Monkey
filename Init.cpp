@@ -48,6 +48,10 @@ int main(int argc, char **argv)
         }
     }
 
+    // set hidden attribute to .git dir
+    sprintf(dir_name_buf, "%s%s", current_dir, create_dir_list[0]);
+    SetFileAttributes(dir_name_buf, FILE_ATTRIBUTE_HIDDEN);
+
     // create config file
     std::ofstream writing_file;
     std::string filename = ".\\.git\\config";

@@ -1,6 +1,8 @@
 #undef UNICODE
 
 #include <iostream>
+#include <ios>
+#include <iomanip>
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -67,13 +69,13 @@ int main(int argc, char **argv)
 
     // create blob objects
     for(std::string file_name : child_files) {
-        std::ifstream ifs(file_name, std::ios::in | std::ios::binary);
+        std::ifstream ifs(file_name, std::ios::in);     // not binary mode to change newline from CRLF to LF
         if (ifs.fail()) {
             std::cerr << "Failed to open file." << std::endl;
             return -1;
         }
 
-        std::vector<unsigned char> buffer(std::istreambuf_iterator<char>(ifs), {});
+        std::vector<char> buffer{std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>()};
         std::vector<unsigned char> blob_raw_data;
         blob_raw_data.push_back('b');
         blob_raw_data.push_back('l');
@@ -99,11 +101,14 @@ int main(int argc, char **argv)
 
         std::ostringstream ss;
         for (size_t i = 0; i < hash1.size(); i++) {
-            ss << std::hex << (int)hash1.at(i);
+            ss << std::setfill('0') << std::right << std::setw(2) << std::hex << (int)hash1.at(i);      // 1 byte => 2-digit hexadecimal number
         }
+
         std::string tmp = ss.str();
         std::string sha1_file_name_pre = tmp.substr(0, 2);          // 上位 2 桁
         std::string sha1_file_name = tmp.substr(2);                 // 残り
+
+
         // save blob object
 
         // create dir
@@ -126,9 +131,14 @@ int main(int argc, char **argv)
         }
 
         // create file
-        std::ofstream writing_file;
         std::string out_file_name = ".\\.git\\objects\\" + sha1_file_name_pre + "\\" + sha1_file_name;
 
+        // std::ofstream writing_file;
+        // writing_file.open(out_file_name, std::ios::out | std::ios::binary);
+        // for (unsigned char u : blob_raw_data) {
+        //     writing_file.write((char *)(&u), sizeof(unsigned char));
+        // }
+        // writing_file.close();
         const char *In = file_name.c_str();
         const char *Out = out_file_name.c_str();
         do_compress(In, Out);   // zlib 圧縮
