@@ -52,6 +52,50 @@ std::vector<std::string> scan_directory(const std::string& dir_name) {
     return file_names;
 }
 
+// Index entry
+struct IndexEntry {
+    uint32_t ctime_seconds;                             // the last time a file's metadata changed
+    uint32_t ctime_nanosecond_fractions;
+    uint32_t mtime_seconds;                             //  the last time a file's data changed
+    uint32_t mtime_nanosecond_fractions;
+    uint32_t dev;                                       // dev num
+    uint32_t ino;                                       // inode
+    uint8_t mode[32];                                   // permisson mode
+    uint32_t uid;
+    uint32_t gid;
+    uint32_t file_size;                                 // on-disk size
+    uint8_t sha1[160];                                  // 160-bit SHA-1 for the represented object
+    uint16_t flags;                                     
+    char *entry_path_name;                              // Entry path name (variable length) relative to top level directory
+    uint8_t pad_size;                                   // 1-8 nul bytes as necessary to pad the entry to a multiple of eight bytes
+};
+
+// Index
+struct INDEX {   
+    // All binary numbers are in network byte order
+    unsigned char sig[4] = {'D', 'I', 'R', 'C'};        // (stands for "dircache")
+    uint32_t version = htonl(2);                        // version 2
+    uint32_t entsize;                                   // index entry size
+    IndexEntry *ient;                                   // entries
+};
+
+
+int create_index(std::vector<std::string> &child_files)
+{
+    INDEX Index;
+    Index.entsize = htonl(child_files.size());
+
+    for(std::string file_name : child_files) {
+
+    }
+
+
+    
+    return EXIT_SUCCESS;
+}
+
+
+
 int main(int argc, char **argv)
 {
     if (argc != 2 || strcmp(argv[1], "-A")) {
@@ -67,12 +111,12 @@ int main(int argc, char **argv)
     std::string current_dir_s(current_dir);
     std::vector<std::string> child_files = scan_directory(current_dir_s);
 
-    // create blob objects
+    /* create blob objects for all child files*/
     for(std::string file_name : child_files) {
         std::ifstream ifs(file_name, std::ios::in);     // not binary mode to change newline from CRLF to LF
         if (ifs.fail()) {
             std::cerr << "Failed to open file." << std::endl;
-            return -1;
+            return EXIT_FAILURE;
         }
 
         std::vector<char> buffer{std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>()};
@@ -95,7 +139,7 @@ int main(int argc, char **argv)
         status = CreateHash(BCRYPT_SHA1_ALGORITHM, blob_raw_data, hash1);
         if (!NT_SUCCESS(status)) {
             std::cout << "Error: " << status << std::endl;
-            return -1;
+            return EXIT_FAILURE;
         }
 
 
@@ -141,8 +185,11 @@ int main(int argc, char **argv)
         // writing_file.close();
         //const char *In = file_name.c_str();
         const char *Out = out_file_name.c_str();
-        //do_compress(In, Out);   // zlib 圧縮
-        do_compress2(blob_raw_data, Out);   // zlib 圧縮
+        do_compress2(blob_raw_data, Out);   // zlib compress
+
+
+        // create/update index
+
     }
 
     return 0;
