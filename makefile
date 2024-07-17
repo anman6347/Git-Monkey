@@ -2,7 +2,7 @@ CXX = g++
 CXXFLAGS = 
 INCDIR = ".\\zlib-1.3.1"
 LIBDIR = ".\\zlib-1.3.1"
-SRCS = MiniGit.cpp Add.cpp Init.cpp
+SRCS = MiniGit.cpp Add.cpp Init.cpp Commit.cpp
 TARGET := $(SRCS:%.cpp=%.exe)
 SRCS +=  Crypt.cpp
 OBJS = $(SRCS:%.cpp=%.o)
@@ -34,15 +34,11 @@ Init.exe: Init.o
 Add.exe: Add.o Crypt.o
 	$(CXX) $(CXXFLAGS) -L $(LIBDIR) $^ -o $@ -lbcrypt -lz -lws2_32
 
-run: $(TARGET)
-	cd ..\testspace && ..\Xass\MiniGit.exe init && ..\Xass\MiniGit.exe add -A && cd ..\Xass
+Commit.exe: Commit.o Crypt.o
+	$(CXX) $(CXXFLAGS) -L $(LIBDIR) $^ -o $@ -lbcrypt -lz -lws2_32
 
-# del /Q .\*
-#	del /Q ..\testspace\* 
-#	copy *.exe ..\testspace
-#	cd ..\testspace
-#	.\MiniGit.exe init
-#	cd ..\Xass
+run: $(TARGET)
+	cd ..\testspace && ..\Xass\MiniGit.exe init && ..\Xass\MiniGit.exe add -A && ..\Xass\MiniGit.exe commit -m "test commit 1" && cd ..\Xass
 
 clean:
 	del $(TARGET) $(OBJS)

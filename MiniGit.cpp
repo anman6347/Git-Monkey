@@ -130,5 +130,27 @@ int cmd_execute(int argc, char** args) {
 
 
 int main(int argc, char **argv) {
+
+    // Re-add double quotation marks
+    int i = 0, j = 0;
+    bool need_dq = false;
+    while (argv[i]) {
+        for (j = 0; argv[i][j] != '\0'; j++) {
+            if (argv[i][j] == ' ') {
+                need_dq = true;
+            }
+        }
+
+        if (need_dq) {
+            char nargv[256];
+            nargv[0] = '"';
+            strcpy(nargv + 1, argv[i]);
+            nargv[j + 1] = '"';
+            argv[i] = nargv;
+        }
+        need_dq = false;
+        i++;
+    }
+
     return cmd_execute(argc, argv);
 }
