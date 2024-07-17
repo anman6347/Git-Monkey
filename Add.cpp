@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <fstream>
 #include <sstream>
+#include <new>
 #include <vector>
 #include <cstring>
 #include <sys/types.h>
@@ -63,7 +64,7 @@ struct IndexEntry {
     uint32_t mtime_nanosecond_fractions;
     uint32_t dev;                                       // dev num
     uint32_t ino;                                       // inode
-    uint8_t mode[32] = {0};                             // permisson mode (big endian)
+    uint32_t mode = 0;                                  // permisson mode (big endian)
     uint32_t uid;
     uint32_t gid;
     uint32_t file_size;                                 // on-disk size
@@ -76,14 +77,14 @@ struct IndexEntry {
 // Index
 struct INDEX {   
     // All binary numbers are in network byte order
-    unsigned char sig[4] = {'D', 'I', 'R', 'C'};        // (stands for "dircache")
+    char sig[4] = {'D', 'I', 'R', 'C'};                 // (stands for "dircache")
     uint32_t version = htonl(2);                        // version 2
     uint32_t entsize;                                   // index entry size
     int ient_off = 12;                                  // entries offset
 };
 
 
-int create_index(std::vector<std::string> &child_files, std::vector<std::string> &sha1_list)
+int create_index(std::string &current_dir, std::vector<std::string> &child_files, std::vector<std::string> &sha1_list)
 {
     INDEX Index;
     Index.entsize = htonl(child_files.size());
@@ -112,7 +113,7 @@ int create_index(std::vector<std::string> &child_files, std::vector<std::string>
         mtime = buf.st_mtime;
         mode = buf.st_mode;
         if (!S_ISREG(mode)) {
-            std::cerr << "MiniGit supports only regular file" << std::endl;
+            std::cerr << "MiniGit supports only regular file." << std::endl;
             return EXIT_FAILURE;
         }
 
@@ -122,31 +123,57 @@ int create_index(std::vector<std::string> &child_files, std::vector<std::string>
         IdxEnt.mtime_nanosecond_fractions = 0;      // unknown
 
         // regular file
-        IdxEnt.mode[15] = 1;
-        IdxEnt.mode[14] = 0;
-        IdxEnt.mode[13] = 0;
-        IdxEnt.mode[12] = 0;
+        IdxEnt.mode |= (1 << 15);
+        IdxEnt.mode &= ~(1 << 14);
+        IdxEnt.mode &= ~(1 << 13);
+        IdxEnt.mode &= ~(1 << 12);
         // reserved
-        IdxEnt.mode[11] = 0;
-        IdxEnt.mode[10] = 0;
-        IdxEnt.mode[9] = 0;
+        IdxEnt.mode &= ~(1 << 11);
+        IdxEnt.mode &= ~(1 << 10);
+        IdxEnt.mode &= ~(1 << 9);
         // permission (644 or 755)
         // windows only use 644 ?
-        IdxEnt.mode[8] = 1;
-        IdxEnt.mode[7] = 1;
-        IdxEnt.mode[6] = 0;
-        IdxEnt.mode[5] = 1;
-        IdxEnt.mode[4] = 0;
-        IdxEnt.mode[3] = 0;
-        IdxEnt.mode[2] = 1;
-        IdxEnt.mode[1] = 0;
-        IdxEnt.mode[0] = 0;
+        IdxEnt.mode |= (1 << 8);
+        IdxEnt.mode |= (1 << 7);
+        IdxEnt.mode &= ~(1 << 6);
+        IdxEnt.mode |= (1 << 5);
+        IdxEnt.mode &= ~(1 << 4);
+        IdxEnt.mode &= ~(1 << 3);
+        IdxEnt.mode |= (1 << 2);
+        IdxEnt.mode &= ~(1 << 1);
+        IdxEnt.mode &= ~(1 << 0);
 
-        IdxEnt.file_size = buf.st_size;
+        IdxEnt.mode = htonl(IdxEnt.mode);
 
-        for(int k = 19; k >= 0; k--) {
-            // IdxEnt.sha1[k] = sha1_list[i][159 - k];
+        IdxEnt.file_size = htonl(buf.st_size);
+
+        std::string sha1_str = sha1_list[i];
+        for(int k = 0; k < 40; k += 2) {
+            std::string hex_2digit = sha1_str.substr(k, 2);
+            IdxEnt.sha1[19 - (k / 2)] = std::stoul(hex_2digit, nullptr, 16);        // big endian
         }
+
+        int filename_size = file_path.size() - current_dir.size() - 1;      // ignore first '\'
+        if(filename_size >= (1 << 12)) {
+            std::cerr << "long file name is not supported." << std::endl;
+            return EXIT_FAILURE;
+        }
+        IdxEnt.flags = htons(filename_size);
+
+        // entry path name
+        std::string entry_path_name_raw = (file_path.substr(current_dir.size() + 1, filename_size)).c_str();     // ignore first '\'
+        for(int k = 0; k < entry_path_name_raw.size(); k++) {
+            if (entry_path_name_raw[k] == '\\') {
+                entry_path_name_raw[k] = '/';
+            }
+        }
+
+        char* tmp = new char[filename_size + 1];
+        strcpy(tmp, entry_path_name_raw.c_str());
+        IdxEnt.entry_path_name = tmp;
+
+        // padding size
+        IdxEnt.pad_size = 8 - ((62 + filename_size) % 8);
 
         // save Index entry data
         IdxEnts.push_back(IdxEnt);
@@ -155,11 +182,74 @@ int create_index(std::vector<std::string> &child_files, std::vector<std::string>
     }
 
     // create Index
+    std::string index_file_path = ".\\.git\\index";
+    std::ofstream writing_file;
+    writing_file.open(index_file_path, std::ios::out | std::ios::binary);
 
-    // debug
-    for(int i = 0; i < child_files.size(); i++) {
-        //std::cout << std::hex << IdxEnts[i].ctime_seconds <<" " << IdxEnts[i].ctime_nanosecond_fractions <<std::endl;
+    // write data to index
+    writing_file.write(Index.sig, sizeof(unsigned char) * 4);
+    writing_file.write((char *)&Index.version, sizeof(uint32_t));
+    writing_file.write((char *)&Index.entsize, sizeof(uint32_t));
+    for (int i = 0; i < IdxEnts.size(); i++) {
+        writing_file.write((char *)&IdxEnts[i].ctime_seconds, sizeof(uint32_t));
+        writing_file.write((char *)&IdxEnts[i].ctime_nanosecond_fractions, sizeof(uint32_t));
+        writing_file.write((char *)&IdxEnts[i].mtime_seconds, sizeof(uint32_t));
+        writing_file.write((char *)&IdxEnts[i].mtime_nanosecond_fractions, sizeof(uint32_t));
+        writing_file.write((char *)&IdxEnts[i].dev, sizeof(uint32_t));
+        writing_file.write((char *)&IdxEnts[i].ino, sizeof(uint32_t));
+        writing_file.write((char *)(&IdxEnts[i].mode), sizeof(uint32_t));
+        writing_file.write((char *)&IdxEnts[i].uid, sizeof(uint32_t));
+        writing_file.write((char *)&IdxEnts[i].gid, sizeof(uint32_t));
+        writing_file.write((char *)&IdxEnts[i].file_size, sizeof(uint32_t));
+        for (int j = 19; j >= 0; j--) {
+            writing_file.write((char *)(&IdxEnts[i].sha1[j]), sizeof(unsigned char));
+        }
+        writing_file.write((char *)&IdxEnts[i].flags, sizeof(uint16_t));
+        writing_file.write((char *)(IdxEnts[i].entry_path_name), ntohs(IdxEnts[i].flags));
+        for (int j = 0; j < IdxEnts[i].pad_size; j++) {
+            writing_file.write("\0", sizeof(char));
+        }
+        delete [] IdxEnts[i].entry_path_name;
     }
+    writing_file.close();
+
+
+    // calc sha1 checksum
+    std::ifstream ifs;
+    int index_file_size;
+
+    ifs.open(index_file_path, std::ios::in | std::ios::binary);
+
+    ifs.seekg(0, ifs.end);
+    index_file_size = static_cast<int>(ifs.tellg());
+    ifs.seekg(0, ifs.beg);
+
+    std::vector<unsigned char> buffer(index_file_size, 0);
+    ifs.read(reinterpret_cast<char *>(buffer.data()), index_file_size);
+    ifs.close();
+
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    std::vector<UCHAR> hash1;
+    status = CreateHash(BCRYPT_SHA1_ALGORITHM, buffer, hash1);
+    if (!NT_SUCCESS(status)) {
+        std::cout << "Error: " << status << std::endl;
+        return EXIT_FAILURE;
+    }
+    std::ostringstream ss;
+    for (size_t i = 0; i < hash1.size(); i++) {
+        ss << std::setfill('0') << std::right << std::setw(2) << std::hex << (int)hash1.at(i);      // 1 byte => 2-digit hexadecimal number
+    }
+    std::string sha1_str = ss.str();
+
+    // write checksum
+    writing_file.open(index_file_path, std::ios::app | std::ios::binary);
+    for(int k = 0; k < 40; k += 2) {
+        std::string hex_2digit = sha1_str.substr(k, 2);
+        uint8_t tmp =  static_cast<uint8_t>(std::stoul(hex_2digit, nullptr, 16));
+        writing_file.write((char *)(&tmp), sizeof(uint8_t));
+    }
+    writing_file.flush();
+    writing_file.close();
     return EXIT_SUCCESS;
 }
 
@@ -247,20 +337,12 @@ int main(int argc, char **argv)
 
         // create file
         std::string out_file_name = ".\\.git\\objects\\" + sha1_file_name_pre + "\\" + sha1_file_name;
-
-        // std::ofstream writing_file;
-        // writing_file.open(out_file_name, std::ios::out | std::ios::binary);
-        // for (unsigned char u : blob_raw_data) {
-        //     writing_file.write((char *)(&u), sizeof(unsigned char));
-        // }
-        // writing_file.close();
-        //const char *In = file_name.c_str();
         const char *Out = out_file_name.c_str();
         do_compress2(blob_raw_data, Out);   // zlib compress
     }
 
     // create/update index
-    create_index(child_files, sha1_list);
+    create_index(current_dir_s, child_files, sha1_list);
 
     return 0;
 }
