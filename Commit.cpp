@@ -9,11 +9,13 @@
 #include <string>
 #include <vector>
 #include <windows.h>
+#include "Crypt.hpp"
 
 struct Node {
 public:
     Node *parent = nullptr;
     Node *left_child = nullptr;
+    Node *right_sibling = nullptr;
     std::string dir_path;
     std::vector<std::string> childfile_path_list;
 };
@@ -22,65 +24,78 @@ class FileTree {
 public:
     Node *root;
 public:
-    FileTree(const std::string& dir_name);
+    FileTree(const std::string& _dir_path);
+    //~FileTree();
+private:
     void scan(Node *nd);
 };
 
-FileTree::FileTree(const std::string& dir_name)
+FileTree::FileTree(const std::string& _dir_path)
 {
     root = new Node;
-    root->dir_path = dir_name;
+    root->dir_path = _dir_path;
+    scan(root);
 }
 
 void FileTree::scan(Node *nd)
 {
     HANDLE fHandle;
     WIN32_FIND_DATA win32fd;
-    
+    std::string search_name = nd->dir_path + "\\*";
+    fHandle = FindFirstFile(search_name.c_str(), &win32fd);
+    if (fHandle == INVALID_HANDLE_VALUE) {
+        // "'GetLastError() == 3' is 'file not found'"
+        return;
+    }
+
+    bool first_dir_flag = true;
+    Node *left_sibling = nullptr;
+    do {
+        if (win32fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {  // directory => create dir tree
+            // ignore . and .. directory
+            if (win32fd.cFileName[0] == '.') continue;
+            // ignore .git directory
+            if (strcmp(win32fd.cFileName, ".git") == 0) continue;
+
+            if (first_dir_flag) {
+                nd->left_child = new Node;
+                nd->left_child->dir_path = nd->dir_path + "\\" + win32fd.cFileName;
+                nd->left_child->parent = nd;
+                left_sibling = nd->left_child;
+                first_dir_flag = false;
+                scan(nd->left_child);
+            } else {
+                left_sibling->right_sibling = new Node;
+                left_sibling->right_sibling->dir_path = nd->dir_path + "\\" + win32fd.cFileName;
+                left_sibling->right_sibling->parent = nd;
+                left_sibling = left_sibling->right_sibling;
+                scan(left_sibling);
+            }
+        } else {
+            nd->childfile_path_list.push_back(nd->dir_path + "\\" + win32fd.cFileName);
+        }
+
+    } while(FindNextFile(fHandle, &win32fd));
+
+    FindClose(fHandle);
+    return;
 }
 
+void debug_ftree (Node *cur, int space_count){
+    if (cur == nullptr) return;
 
-// std::vector<std::string> scan_directory(const std::string& dir_name) {
-
-//     HANDLE fHandle;
-//     WIN32_FIND_DATA win32fd;
-//     std::vector<std::string> file_names;
-
-//     std::string search_name = dir_name + "\\*";
-
-//     fHandle = FindFirstFile(search_name.c_str(), &win32fd);
-
-//     if (fHandle == INVALID_HANDLE_VALUE) {
-//         // "'GetLastError() == 3' is 'file not found'"
-//         return file_names;
-//     }
-
-//     do {
-//         if (win32fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {  // directory
-
-//             // ignore current directory
-//             if (win32fd.cFileName[0] == '.') continue;
-//             // ignore .git directory
-//             if (strcmp(win32fd.cFileName, ".git") == 0) continue;
-
-//             std::string fullpath = dir_name + "\\" + win32fd.cFileName;
-
-
-//             //再帰的にファイルを検索
-//             std::vector<std::string> files = scan_directory(fullpath);
-
-//             file_names.insert(file_names.end(), files.begin(), files.end());
-//         } else {  // file
-//             std::string fullpath = dir_name + "\\" + win32fd.cFileName;
-//             file_names.emplace_back(fullpath);
-//         }
-//     } while (FindNextFile(fHandle, &win32fd));
-
-//     FindClose(fHandle);
-
-//     return file_names;
-// }
-
+    for (Node *cur2 = cur; cur2 != nullptr; cur2 = cur2->right_sibling) {
+        for (int k = 0; k < space_count * 6; k++) std::cout << " ";
+        std::cout << "[dir]: " << cur2->dir_path << std::endl;
+        for (std::string t: cur2->childfile_path_list) {
+            for (int k = 0; k < space_count * 6; k++) std::cout << " ";
+            std::cout << "  |---[file]: " << t << std::endl;
+            std::cout << calc_blob_sha1_str(t) << std::endl;
+        }
+        debug_ftree(cur2->left_child, space_count + 1);
+    }
+    return;
+}
 
 int main(int argc, char **argv)
 {
@@ -103,10 +118,10 @@ int main(int argc, char **argv)
     // we'll develop a function in the near future to determine if modified files have been properly staged
     //
 
-
     // create tree objects
     FileTree filetree(current_dir_str);
-    std::cout << filetree.root->dir_path << std::endl;
 
+    Node *root = filetree.root;
+    debug_ftree(root, 0);
     return EXIT_SUCCESS;
 }

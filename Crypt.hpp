@@ -2,6 +2,11 @@
 #define __CRYPTO_HPP
 
 #include <iostream>
+#include <ios>
+#include <iomanip>
+#include <fstream>
+#include <sstream>
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <windows.h>
@@ -14,6 +19,6 @@
 
 // calc sha1
 NTSTATUS CreateHash(LPCWSTR pszAlgId, std::vector<UCHAR> &input, std::vector<UCHAR> &output);
-
+std::string calc_blob_sha1_str(std::string &file_path);
 
 #endif

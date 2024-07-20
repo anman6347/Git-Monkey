@@ -90,3 +90,40 @@ NTSTATUS CreateHash(LPCWSTR pszAlgId, std::vector<UCHAR> &input, std::vector<UCH
     return status;
 
 }
+
+// calc sha1 and return it in str form  (not binary mode)
+std::string calc_blob_sha1_str(std::string &file_path)
+{
+    std::string res;
+    std::ifstream ifs;
+    ifs.open(file_path, std::ios::in);
+    std::vector<char> buffer_c{std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>()};
+    std::vector<unsigned char> buffer;
+    buffer.insert(buffer.end(), buffer_c.begin(), buffer_c.end());
+    buffer.insert(buffer.begin(), static_cast<uint8_t>('\0'));
+    std::string file_size_str = std::to_string(buffer_c.size());
+    for (int i = file_size_str.size() - 1; i >= 0; i--) {
+        buffer.insert(buffer.begin(), static_cast<uint8_t>(file_size_str[i]));
+    }
+    buffer.insert(buffer.begin(), static_cast<uint8_t>(' '));
+    buffer.insert(buffer.begin(), static_cast<uint8_t>('b'));
+    buffer.insert(buffer.begin(), static_cast<uint8_t>('o'));
+    buffer.insert(buffer.begin(), static_cast<uint8_t>('l'));
+    buffer.insert(buffer.begin(), static_cast<uint8_t>('b'));
+
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    std::vector<UCHAR> hash1;
+    status = CreateHash(BCRYPT_SHA1_ALGORITHM, buffer, hash1);
+    if (!NT_SUCCESS(status)) {
+        std::cout << "Error: " << status << std::endl;
+        return res;
+    }
+
+    std::ostringstream ss;
+    for (size_t i = 0; i < hash1.size(); i++) {
+        ss << std::setfill('0') << std::right << std::setw(2) << std::hex << (int)hash1.at(i);      // 1 byte => 2-digit hexadecimal number
+    }
+
+    res = ss.str();
+    return res;
+}

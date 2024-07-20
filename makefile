@@ -38,7 +38,7 @@ Commit.exe: Commit.o Crypt.o
 	$(CXX) $(CXXFLAGS) -L $(LIBDIR) $^ -o $@ -lbcrypt -lz -lws2_32
 
 run: $(TARGET)
-	cd ..\testspace && ..\Xass\MiniGit.exe init && ..\Xass\MiniGit.exe add -A && ..\Xass\MiniGit.exe commit -m "test commit 1" && cd ..\Xass
+	cd ..\test_tmp_dir1 && ..\Xass\MiniGit.exe init && ..\Xass\MiniGit.exe add -A && ..\Xass\MiniGit.exe commit -m "test commit 1" && cd ..\Xass
 
 clean:
 	del $(TARGET) $(OBJS)
