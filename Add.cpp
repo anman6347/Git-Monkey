@@ -14,6 +14,7 @@
 #include "Crypt.hpp"
 #include <windows.h>
 #include "Compress.hpp"
+#include "Index.hpp"
 
 std::vector<std::string> scan_directory(const std::string& dir_name) {
 
@@ -56,32 +57,6 @@ std::vector<std::string> scan_directory(const std::string& dir_name) {
     return file_names;
 }
 
-// Index entry
-struct IndexEntry {
-    uint32_t ctime_seconds;                             // the last time a file's metadata changed
-    uint32_t ctime_nanosecond_fractions;
-    uint32_t mtime_seconds;                             //  the last time a file's data changed
-    uint32_t mtime_nanosecond_fractions;
-    uint32_t dev;                                       // dev num
-    uint32_t ino;                                       // inode
-    uint32_t mode = 0;                                  // permisson mode (big endian)
-    uint32_t uid;
-    uint32_t gid;
-    uint32_t file_size;                                 // on-disk size
-    uint8_t sha1[20];                                   // 160-bit SHA-1 for the represented object
-    uint16_t flags;                                     
-    char *entry_path_name;                              // Entry path name (variable length) relative to top level directory
-    uint8_t pad_size;                                   // 1-8 nul bytes as necessary to pad the entry to a multiple of eight bytes
-};
-
-// Index
-struct INDEX {   
-    // All binary numbers are in network byte order
-    char sig[4] = {'D', 'I', 'R', 'C'};                 // (stands for "dircache")
-    uint32_t version = htonl(2);                        // version 2
-    uint32_t entsize;                                   // index entry size
-    int ient_off = 12;                                  // entries offset
-};
 
 
 int create_index(std::string &current_dir, std::vector<std::string> &child_files, std::vector<std::string> &sha1_list)
@@ -312,7 +287,6 @@ int main(int argc, char **argv)
         sha1_list.push_back(sha1);
         std::string sha1_file_name_pre = sha1.substr(0, 2);          // 上位 2 桁
         std::string sha1_file_name = sha1.substr(2);                 // 残り
-
 
         // save blob object
 

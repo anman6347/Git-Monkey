@@ -98,6 +98,7 @@ std::string calc_blob_sha1_str(std::string &file_path)
     std::ifstream ifs;
     ifs.open(file_path, std::ios::in);
     std::vector<char> buffer_c{std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>()};
+    ifs.close();
     std::vector<unsigned char> buffer;
     buffer.insert(buffer.end(), buffer_c.begin(), buffer_c.end());
     buffer.insert(buffer.begin(), static_cast<uint8_t>('\0'));
@@ -126,4 +127,45 @@ std::string calc_blob_sha1_str(std::string &file_path)
 
     res = ss.str();
     return res;
+}
+
+
+// calc sha-1 (str) from u8 data
+std::string calc_sha1_str_from_u8data(std::vector<uint8_t> &raw_data)
+{
+    std::string res;
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    std::vector<UCHAR> hash1;
+    status = CreateHash(BCRYPT_SHA1_ALGORITHM, raw_data, hash1);
+    if (!NT_SUCCESS(status)) {
+        std::cout << "Error: " << status << std::endl;
+        return res;
+    }
+
+    std::ostringstream ss;
+    for (size_t i = 0; i < hash1.size(); i++) {
+        ss << std::setfill('0') << std::right << std::setw(2) << std::hex << (int)hash1.at(i);      // 1 byte => 2-digit hexadecimal number
+    }
+
+    res = ss.str();
+    return res;
+}
+
+
+// calc sha-1 (big endian) from u8 data
+int calc_sha1_from_u8data(uint8_t dst[], std::vector<uint8_t> &raw_data)
+{
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
+    std::vector<UCHAR> hash1;
+    status = CreateHash(BCRYPT_SHA1_ALGORITHM, raw_data, hash1);
+    if (!NT_SUCCESS(status)) {
+        std::cout << "Error: " << status << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    for (int i = 19; i >= 0; i--) {
+        dst[i] = hash1.at(19 - i);
+    }
+
+    return EXIT_SUCCESS;
 }

@@ -1,3 +1,6 @@
+#ifndef __COMPRESS_HPP
+#define __COMPRESS_HPP
+
 #include <cstdio>
 #include <cstdlib>
 #include <vector>
@@ -233,3 +236,6 @@ void do_compress2(std::vector<unsigned char> &in, const char *out_file){
         fclose(fout);
         return;
 }
+
+
+#endif
