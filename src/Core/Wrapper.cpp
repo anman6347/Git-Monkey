@@ -1,57 +1,36 @@
-#undef UNICODE
-
 #include <iostream>
-#include <cstdio>
-#include <cstring>
-#include <cstdlib>
-#include <windows.h>
+#include <string>
+#undef UNICODE
+#include <Windows.h>
 
+int main(int argc, char **argv) {
 
-/* List of builtin commands, followed by their corresponding functions. */
-const char* builtin_str[] = {
-    "init",
-    "add",
-    "commit",
-    "reset",
-    "log",
-    "status"
-};
+    if (argc <= 1) {
+        std::cerr << "wrapper error" << std::endl;
+    }
 
-// return the number of built-in commands
-int num_builtins() {
-    return sizeof(builtin_str) / sizeof(char*);
-}
+    if( !SetCurrentDirectory(argv[1])) {
+        printf("SetCurrentDirectory failed (%d)\n", GetLastError());
+        return EXIT_FAILURE;
+    }
 
+    // std::cout << argv[1] << std::endl;
+    // Sleep(3000);
 
-HANDLE childProcess = NULL;
-
-int cmd_launch(char **args) {
     char commandLine[256] = {' '};          // e.g. MiniGit add -A => commandLine = "Add -A    "
-    int i = 1;
+    int i = 2;
     int index = 0;
-    while(args[i]) {
-        for(int j = 0; args[i][j] != '\0'; j++) {
-            commandLine[index] = args[i][j];
+    while(argv[i]) {
+        for(int j = 0; argv[i][j] != '\0'; j++) {
+            commandLine[index] = argv[i][j];
             index++;
         }
         commandLine[index] = ' ';
         index++;
         i++;
     }
-    commandLine[0] = toupper(commandLine[0]);
 
-
-
-    /* Get full path of the currently executing executable
-    char MiniGitPath[256] = {'\0'};
-    GetModuleFileName(
-        NULL,                                           // Get full path of the currently executing executable
-        MiniGitPath,                                    // buffer
-        sizeof(MiniGitPath) / sizeof(MiniGitPath[0])    // buffer size
-    );
-    std::cout << MiniGitPath << std::endl;
-    */
-
+    HANDLE childProcess = NULL;
     STARTUPINFO si = {sizeof(STARTUPINFO)};
     PROCESS_INFORMATION pi = {};
     if(!CreateProcess(
@@ -106,47 +85,4 @@ int cmd_launch(char **args) {
     GetExitCodeProcess(childProcess, &exitCode);
 
     return exitCode;
-}
-
-int cmd_execute(int argc, char** args) {
-    if(argc <= 1) {
-        // An empty command was entered.
-        return EXIT_FAILURE;
-    }
-
-    for(int i = 0; i < num_builtins(); i++) {
-        if(strcmp(args[1], builtin_str[i]) == 0) {
-            return cmd_launch(args);
-        }
-    }
-
-    std::cerr <<"\"" << args[1] << "\"" << " is not supported" << std::endl;
-    return EXIT_FAILURE;
-}
-
-
-int main(int argc, char **argv) {
-
-    // Re-add double quotation marks
-    int i = 0, j = 0;
-    bool need_dq = false;
-    while (argv[i]) {
-        for (j = 0; argv[i][j] != '\0'; j++) {
-            if (argv[i][j] == ' ') {
-                need_dq = true;
-            }
-        }
-
-        if (need_dq) {
-            char nargv[256];
-            nargv[0] = '"';
-            strcpy(nargv + 1, argv[i]);
-            nargv[j + 1] = '"';
-            argv[i] = nargv;
-        }
-        need_dq = false;
-        i++;
-    }
-
-    return cmd_execute(argc, argv);
 }

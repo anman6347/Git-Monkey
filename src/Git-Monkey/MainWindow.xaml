@@ -5,8 +5,24 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Git_Monkey"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="Git-Monkey" Height="424" Width="600">
     <Grid>
-
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="31*"/>
+                <ColumnDefinition Width="169*"/>
+            </Grid.ColumnDefinitions>
+            <ListBox x:Name="CommitList" HorizontalAlignment="Left" Height="308" Margin="10,66,0,0" VerticalAlignment="Top" Width="351" d:ItemsSource="{d:SampleData ItemCount=5}" Background="#FFC5E68E" Grid.ColumnSpan="2" BorderThickness="2,2,2,2"/>
+            <Label x:Name="commits_title" Content="Commit List" HorizontalAlignment="Left" Margin="10,39,0,0" VerticalAlignment="Top" Width="351" Height="27" RenderTransformOrigin="0.49,2.594" Background="#FFC5E68E" Grid.ColumnSpan="2" BorderBrush="#FFABADB3" BorderThickness="2,2,2,0"/>
+            <Label x:Name="DirPathLabel" Content="Dir:" Height="29" Margin="10,12,88,0" VerticalAlignment="Top" Grid.ColumnSpan="2" Background="#FFF7E2E2" BorderBrush="#FFABADB3" BorderThickness="2,2,2,2"/>
+            <Button Grid.Column="1" Content="open" HorizontalAlignment="Left" Height="29" Margin="405,12,0,0" VerticalAlignment="Top" Width="83" Click="Button_Click_Dir"/>
+            <Button Grid.Column="1" Content="reset" HorizontalAlignment="Left" Height="51" Margin="293,323,0,0" VerticalAlignment="Top" Width="195" Background="#FFEA9999" Click="Button_Click_Reset"/>
+            <Button Grid.Column="1" Content="commit" HorizontalAlignment="Left" Height="51" Margin="293,243,0,0" VerticalAlignment="Top" Width="195" Background="#FF3BBF01"/>
+            <Button Grid.Column="1" Content="upload" HorizontalAlignment="Left" Height="51" Margin="293,86,0,0" VerticalAlignment="Top" Width="195" Background="#FF52CACC"/>
+            <TextBox Grid.Column="1" HorizontalAlignment="Left" Height="19" Margin="293,201,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="195" Text="commit message" Background="#FFE2DEDE"/>
+            <TextBox Grid.Column="1" HorizontalAlignment="Left" Height="19" Margin="293,182,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="195" Text="e_mail" Background="#FFE2DEDE"/>
+            <TextBox Grid.Column="1" HorizontalAlignment="Left" Height="19" Margin="293,164,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="195" Text="name" Background="#FFE2DEDE"/>
+            <Label x:Name="MSGBOX" Grid.Column="1" Content="msg:" HorizontalAlignment="Left" Height="27" Margin="293,53,0,0" VerticalAlignment="Top" Width="190" Background="White"/>
+        </Grid>
     </Grid>
 </Window>

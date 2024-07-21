@@ -37,7 +37,7 @@ int main(int argc, char **argv)
             {
             case ERROR_ALREADY_EXISTS:
                 std::cerr << "warning: " << create_dir_list[i] <<" is already exists. Ignored it." << std::endl;
-                break;
+                return ERROR_ALREADY_EXISTS;
             case ERROR_PATH_NOT_FOUND:
                 std::cerr << "err: " << create_dir_list[i] << " path not found." << std::endl;
                 return EXIT_FAILURE;
@@ -74,5 +74,5 @@ int main(int argc, char **argv)
     writing_file << writing_text << std::endl;
     writing_file.close();
 
-    return 0;
+    return EXIT_SUCCESS;
 }

@@ -2,7 +2,7 @@ CXX = g++
 CXXFLAGS = 
 INCDIR = ".\\zlib-1.3.1"
 LIBDIR = ".\\zlib-1.3.1"
-SRCS = MiniGit.cpp Add.cpp Init.cpp Commit.cpp
+SRCS = MiniGit.cpp Add.cpp Init.cpp Commit.cpp Wrapper.cpp
 TARGET := $(SRCS:%.cpp=%.exe)
 SRCS +=  Crypt.cpp Index.cpp FileTree.cpp CommitObj.cpp Compress.cpp
 OBJS = $(SRCS:%.cpp=%.o)
@@ -23,6 +23,9 @@ all: $(TARGET)
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -I $(INCDIR) -c $^ -o $@
+
+Wrapper.exe : Wrapper.o
+	$(CXX) $(CXXFLAGS) $^ -o $@
 
 MiniGit.exe: MiniGit.o
 	$(CXX) $(CXXFLAGS) $^ -o $@
