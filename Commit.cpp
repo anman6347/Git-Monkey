@@ -11,127 +11,16 @@
 #include <windows.h>
 #include "Crypt.hpp"
 #include "Index.hpp"
+#include "FileTree.hpp"
 #include "Compress.hpp"
-
-struct Node {
-public:
-    Node *parent = nullptr;
-    Node *left_child = nullptr;
-    Node *right_sibling = nullptr;
-    std::string dir_path;
-    std::string tree_sha1_str;
-    uint8_t tree_sha1[20];
-    std::vector<std::string> childfile_path_list;
-};
-
-class FileTree {
-public:
-    Node *root;
-public:
-    FileTree(const std::string& _dir_path);
-    //~FileTree();
-private:
-    void scan(Node *nd);    // called in constructor
-};
-
-FileTree::FileTree(const std::string& _dir_path)
-{
-    root = new Node;
-    root->dir_path = _dir_path;
-    scan(root);
-}
-
-void FileTree::scan(Node *nd)
-{
-    HANDLE fHandle;
-    WIN32_FIND_DATA win32fd;
-    std::string search_name = nd->dir_path + "\\*";
-    fHandle = FindFirstFile(search_name.c_str(), &win32fd);
-    if (fHandle == INVALID_HANDLE_VALUE) {
-        // "'GetLastError() == 3' is 'file not found'"
-        return;
-    }
-
-    bool first_dir_flag = true;
-    Node *left_sibling = nullptr;
-    do {
-        if (win32fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {  // directory => create dir tree
-            // ignore . and .. directory
-            if (win32fd.cFileName[0] == '.') continue;
-            // ignore .git directory
-            if (strcmp(win32fd.cFileName, ".git") == 0) continue;
-
-            if (first_dir_flag) {
-                nd->left_child = new Node;
-                nd->left_child->dir_path = nd->dir_path + "\\" + win32fd.cFileName;
-                nd->left_child->parent = nd;
-                left_sibling = nd->left_child;
-                first_dir_flag = false;
-                scan(nd->left_child);
-            } else {
-                left_sibling->right_sibling = new Node;
-                left_sibling->right_sibling->dir_path = nd->dir_path + "\\" + win32fd.cFileName;
-                left_sibling->right_sibling->parent = nd;
-                left_sibling = left_sibling->right_sibling;
-                scan(left_sibling);
-            }
-        } else {
-            nd->childfile_path_list.push_back(nd->dir_path + "\\" + win32fd.cFileName);
-        }
-        // std::cout << nd->dir_path + "\\" + win32fd.cFileName << std::endl;
-    } while(FindNextFile(fHandle, &win32fd));
-
-    FindClose(fHandle);
-    return;
-}
-
-
-void debug_ftree (Node *cur, int space_count){
-    if (cur == nullptr) return;
-
-    for (Node *cur2 = cur; cur2 != nullptr; cur2 = cur2->right_sibling) {
-        for (int k = 0; k < space_count * 6; k++) std::cout << " ";
-        std::cout << "[dir]: " << cur2->dir_path << std::endl;
-        for (std::string t: cur2->childfile_path_list) {
-            for (int k = 0; k < space_count * 6; k++) std::cout << " ";
-            std::cout << "  |---[file]: " << t << std::endl;
-            std::cout << calc_blob_sha1_str(t) << std::endl;
-        }
-        debug_ftree(cur2->left_child, space_count + 1);
-    }
-    return;
-}
-
-
-static Node* _get_node_ptr_by_path(Node *nd, std::string &dirpath)
-{
-    if (nd == nullptr) return nullptr;
-
-    for (Node *cur = nd; cur != nullptr; cur = cur->right_sibling) {
-        if (cur->dir_path == dirpath) {
-            return cur;
-        }
-        Node *res = _get_node_ptr_by_path(cur->left_child, dirpath);
-        if (res != nullptr) {
-            return res;
-        };
-    }
-
-    return nullptr;
-}
-
-Node* get_node_ptr_by_path(FileTree *ft, std::string &dirpath)
-{
-    Node *root = ft->root;
-    return _get_node_ptr_by_path(root, dirpath);
-}
+#include "CommitObj.hpp"
 
 
 // you must calculate sha1 of child treeObj before calling this func
 int create_tree_obj(FileTree *ft, CUR_IDX *cur_idx, std::string &dirpath)
 {
     // get node corresponding to the dir
-    Node *nd = get_node_ptr_by_path(ft, dirpath);
+    Node *nd = ft->get_node_ptr_by_path(dirpath);
     if (nd == nullptr) {
         std::cerr << "couldn't find Node : " << dirpath << std::endl;
         return EXIT_FAILURE;
@@ -266,6 +155,29 @@ int main(int argc, char **argv)
         return EXIT_FAILURE;
     }
 
+
+    // set author, e_mail info
+    char env_path[255];
+    GetModuleFileName(NULL, env_path, 255);
+    int index = 254;
+    while (env_path[index] != '\\' || index < 0) index--;
+    env_path[index] = '\0';
+    sprintf(env_path, "%s%s", env_path, "\\.env");
+    std::ifstream ifs;
+    ifs.open(env_path, std::ios::in);
+    if (ifs.fail()) {
+        std::cerr << "couldn't open .env file." << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    std::string author;
+    std::string e_mail;
+
+    std::getline(ifs, author);
+    std::getline(ifs, e_mail);
+    ifs.close();
+
+    // commit message
     std::string commit_message = argv[2];
 
     // Get current dir
@@ -274,7 +186,7 @@ int main(int argc, char **argv)
     std::string current_dir_str(current_dir);
 
 
-    // create tree objects
+    /* create tree objects */
 
     // create file tree
     FileTree filetree(current_dir_str);
@@ -282,6 +194,13 @@ int main(int argc, char **argv)
     CUR_IDX cur_idx;
     // create tree objects
     create_all_tree_obj(&filetree, &cur_idx);
+
+
+    /* create commit object */
+
+
+    CommitObj commitobj(filetree, author, e_mail, commit_message);
+    commitobj.create_obj_file();
 
     return EXIT_SUCCESS;
 }

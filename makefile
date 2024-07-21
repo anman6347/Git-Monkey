@@ -4,7 +4,7 @@ INCDIR = ".\\zlib-1.3.1"
 LIBDIR = ".\\zlib-1.3.1"
 SRCS = MiniGit.cpp Add.cpp Init.cpp Commit.cpp
 TARGET := $(SRCS:%.cpp=%.exe)
-SRCS +=  Crypt.cpp Index.cpp
+SRCS +=  Crypt.cpp Index.cpp FileTree.cpp CommitObj.cpp Compress.cpp
 OBJS = $(SRCS:%.cpp=%.o)
 
 
@@ -31,10 +31,10 @@ Init.exe: Init.o
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
 # -lws2_32 is required windows 10 ?
-Add.exe: Add.o Crypt.o 
+Add.exe: Add.o Crypt.o Compress.o
 	$(CXX) $(CXXFLAGS) -L $(LIBDIR) $^ -o $@ -lbcrypt -lz -lws2_32
 
-Commit.exe: Commit.o Crypt.o Index.o
+Commit.exe: Commit.o Crypt.o Index.o FileTree.o CommitObj.o Compress.o
 	$(CXX) $(CXXFLAGS) -L $(LIBDIR) $^ -o $@ -lbcrypt -lz -lws2_32
 
 run: $(TARGET)
