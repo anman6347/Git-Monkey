@@ -238,7 +238,7 @@ int main(int argc, char **argv)
 
     // \\.git\\refs\\heads\\master
     std::string refs_heads_master_path = filetree.root->dir_path + "\\.git\\refs\\heads\\master";
-    writing_file.open(refs_heads_master_path, std::ios::app);
+    writing_file.open(refs_heads_master_path, std::ios::out);
     if (ifs.fail()) {
         std::cerr << "couldn't open .git/refs/heads/master" << std::endl;
         return EXIT_FAILURE;
@@ -248,7 +248,7 @@ int main(int argc, char **argv)
 
     // \\.git\\COMMIT_EDITMSG
     std::string commit_editmsg_path = filetree.root->dir_path + "\\.git\\COMMIT_EDITMSG";
-    writing_file.open(commit_editmsg_path, std::ios::app);
+    writing_file.open(commit_editmsg_path, std::ios::out);
     if (ifs.fail()) {
         std::cerr << "couldn't open .git/COMMIT_EDITMSG" << std::endl;
         return EXIT_FAILURE;

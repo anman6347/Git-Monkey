@@ -38,7 +38,7 @@ Commit.exe: Commit.o Crypt.o Index.o FileTree.o CommitObj.o Compress.o
 	$(CXX) $(CXXFLAGS) -L $(LIBDIR) $^ -o $@ -lbcrypt -lz -lws2_32
 
 run: $(TARGET)
-	cd ..\test_tmp_dir2 && ..\Xass\MiniGit.exe init && ..\Xass\MiniGit.exe add -A && ..\Xass\MiniGit.exe commit -m "test commit 1" && cd ..\Xass
+	cd ..\test_tmp_dir2 && ..\Xass\MiniGit.exe init && ..\Xass\MiniGit.exe add -A && ..\Xass\MiniGit.exe commit -m "test commit 1" && echo Hi! >> aabbcc.txt && ..\Xass\MiniGit.exe add -A && ..\Xass\MiniGit.exe commit -m "test commit 2" && cd ..\Xass
 
 clean:
 	del $(TARGET) $(OBJS)

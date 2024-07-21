@@ -187,12 +187,12 @@ int CommitObj::read_parent_sha1()
         parent_sha1_str = "0000000000000000000000000000000000000000";
     } else {
         std::string line;
+        std::string last_line;
         while (std::getline(ifs, line)) {
-            // std::cout << line << std::endl;
+            last_line = line;
         }
         ifs.close();
-
-        parent_sha1_str = line.substr(0, 40);       // 40 digit (hex)
+        parent_sha1_str = last_line.substr(41, 40);       // 40 digit (hex)
     }
 
     return EXIT_SUCCESS;
