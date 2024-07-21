@@ -16,10 +16,10 @@ public:
     std::string author;
     std::string e_mail;
     std::string commit_message;
-private:
+    std::string commit_obj_sha1_str;
+    std::string parent_sha1_str;
     time_t current_time;
     std::string timezone;
-    std::string parent_sha1;
 public:
     CommitObj(FileTree ft,
               std::string &_author,

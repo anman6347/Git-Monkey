@@ -34,10 +34,10 @@ int CommitObj::create_obj_file()
     parent_data.push_back('t');
     parent_data.push_back(' ');
     read_parent_sha1();     // get parent sha1
-    parent_data.insert(parent_data.end(), parent_sha1.begin(), parent_sha1.end());
+    parent_data.insert(parent_data.end(), parent_sha1_str.begin(), parent_sha1_str.end());
     parent_data.push_back('\n');
     // write
-    if (parent_sha1 != "0000000000000000000000000000000000000000") {
+    if (parent_sha1_str != "0000000000000000000000000000000000000000") {
         raw_commit_data.insert(raw_commit_data.end(), parent_data.begin(), parent_data.end());
     }
     parent_data.clear();
@@ -109,7 +109,7 @@ int CommitObj::create_obj_file()
 
 
     // create obj file
-    std::string commit_obj_sha1_str = calc_sha1_str_from_u8data(raw_commit_data);
+    commit_obj_sha1_str = calc_sha1_str_from_u8data(raw_commit_data);
     std::string sha1_file_name_pre = commit_obj_sha1_str.substr(0, 2);          // upper two digits
     std::string sha1_file_name = commit_obj_sha1_str.substr(2); 
     // create dir
@@ -176,13 +176,15 @@ int CommitObj::read_parent_sha1()
 
     if (ifs.fail()) {       // Initial commit
         std::string logs_path = current_ft.root->dir_path + "\\.git\\logs";
-        std::string refs_path = current_ft.root->dir_path + "\\.git\\logs\\refs";
+        std::string logs_refs_path = current_ft.root->dir_path + "\\.git\\logs\\refs";
+        std::string logs_refs_heads_path = current_ft.root->dir_path + "\\.git\\logs\\refs\\heads";
         std::string refsheads_path = current_ft.root->dir_path + "\\.git\\refs\\heads";
         create_dir(logs_path);
-        create_dir(refs_path);
+        create_dir(logs_refs_path);
+        create_dir(logs_refs_heads_path);
         create_dir(refsheads_path);
 
-        parent_sha1 = "0000000000000000000000000000000000000000";
+        parent_sha1_str = "0000000000000000000000000000000000000000";
     } else {
         std::string line;
         while (std::getline(ifs, line)) {
@@ -190,7 +192,7 @@ int CommitObj::read_parent_sha1()
         }
         ifs.close();
 
-        parent_sha1 = line.substr(0, 40);       // 40 digit (hex)
+        parent_sha1_str = line.substr(0, 40);       // 40 digit (hex)
     }
 
     return EXIT_SUCCESS;

@@ -197,10 +197,63 @@ int main(int argc, char **argv)
 
 
     /* create commit object */
-
-
     CommitObj commitobj(filetree, author, e_mail, commit_message);
     commitobj.create_obj_file();
 
+    /* create other files */
+    std::ofstream writing_file;
+    // \\.git\\logs\\HEAD
+    std::string logsHEAD_path = filetree.root->dir_path + "\\.git\\logs\\HEAD";
+    writing_file.open(logsHEAD_path, std::ios::app);
+    if (ifs.fail()) {
+        std::cerr << "couldn't open .git/logs/HEAD" << std::endl;
+        return EXIT_FAILURE;
+    }
+    writing_file << commitobj.parent_sha1_str << " " << commitobj.commit_obj_sha1_str << " " << commitobj.author << " " << commitobj.e_mail << " "
+    << std::to_string(commitobj.current_time) << " " << commitobj.timezone << " ";
+    if (commitobj.parent_sha1_str == "0000000000000000000000000000000000000000") {
+        writing_file << "commit (initial):";
+    } else {
+        writing_file << "commit:";
+    }
+    writing_file << " " << commitobj.commit_message << std::endl;
+    writing_file.close();
+
+    // \\.git\\refs\\heads\\master
+    std::string logs_refs_heads_master_path = filetree.root->dir_path + "\\.git\\logs\\refs\\heads\\master";
+    writing_file.open(logs_refs_heads_master_path, std::ios::app);
+    if (ifs.fail()) {
+        std::cerr << "couldn't open .git/logs/refs/heads/master" << std::endl;
+        return EXIT_FAILURE;
+    }
+    writing_file << commitobj.parent_sha1_str << " " << commitobj.commit_obj_sha1_str << " " << commitobj.author << " " << commitobj.e_mail << " "
+    << std::to_string(commitobj.current_time) << " " << commitobj.timezone << " ";
+    if (commitobj.parent_sha1_str == "0000000000000000000000000000000000000000") {
+        writing_file << "commit (initial):";
+    } else {
+        writing_file << "commit:";
+    }
+    writing_file << " " << commitobj.commit_message << std::endl;
+    writing_file.close();
+
+    // \\.git\\refs\\heads\\master
+    std::string refs_heads_master_path = filetree.root->dir_path + "\\.git\\refs\\heads\\master";
+    writing_file.open(refs_heads_master_path, std::ios::app);
+    if (ifs.fail()) {
+        std::cerr << "couldn't open .git/refs/heads/master" << std::endl;
+        return EXIT_FAILURE;
+    }
+    writing_file << commitobj.commit_obj_sha1_str << std::endl;
+    writing_file.close();
+
+    // \\.git\\COMMIT_EDITMSG
+    std::string commit_editmsg_path = filetree.root->dir_path + "\\.git\\COMMIT_EDITMSG";
+    writing_file.open(commit_editmsg_path, std::ios::app);
+    if (ifs.fail()) {
+        std::cerr << "couldn't open .git/COMMIT_EDITMSG" << std::endl;
+        return EXIT_FAILURE;
+    }
+    writing_file << commitobj.commit_message << std::endl;
+    writing_file.close();
     return EXIT_SUCCESS;
 }
