@@ -104,6 +104,16 @@ public partial class MainWindow : Window
         AwaitProcess("..\\Core\\Wrapper.exe", args2);
     }
 
+    /// <summary>
+    /// git push
+    /// </summary>
+    private void Button_Click_Upload(object sender, RoutedEventArgs e)
+    {
+        string[] args = {cur_dir, "MiniGit", "upload"};
+        AwaitProcess("..\\Core\\Wrapper.exe", args);
+        MSGBOX.Content = "アップロードしました.";
+    }
+
     private int AwaitProcess(string path, string [] args)
     {
         var pInfo = new ProcessStartInfo(path);

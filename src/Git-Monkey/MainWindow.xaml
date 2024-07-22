@@ -18,7 +18,7 @@
             <Button Grid.Column="1" Content="open" HorizontalAlignment="Left" Height="29" Margin="405,12,0,0" VerticalAlignment="Top" Width="83" Click="Button_Click_Dir"/>
             <Button Grid.Column="1" Content="復元する" HorizontalAlignment="Left" Height="51" Margin="293,323,0,0" VerticalAlignment="Top" Width="195" Background="#FFEA9999" Click="Button_Click_Reset"/>
             <Button Grid.Column="1" Content="保存する" HorizontalAlignment="Left" Height="51" Margin="293,243,0,0" VerticalAlignment="Top" Width="195" Background="#FF3BBF01" Click="Button_Click_Commit"/>
-            <Button Grid.Column="1" Content="github にアップロードする" HorizontalAlignment="Left" Height="51" Margin="293,86,0,0" VerticalAlignment="Top" Width="195" Background="#FF52CACC"/>
+            <Button Grid.Column="1" Content="github にアップロードする" HorizontalAlignment="Left" Height="51" Margin="293,86,0,0" VerticalAlignment="Top" Width="195" Background="#FF52CACC" Click="Button_Click_Upload"/>
             <TextBox x:Name="CommitMsgText" Grid.Column="1" HorizontalAlignment="Left" Height="19" Margin="293,201,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="195" Text="commit message" Background="#FFE2DEDE"/>
             <TextBox x:Name="EmailText" Grid.Column="1" HorizontalAlignment="Left" Height="19" Margin="293,182,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="195" Text="e_mail" Background="#FFE2DEDE"/>
             <TextBox x:Name="AuthorText" Grid.Column="1" HorizontalAlignment="Left" Height="19" Margin="293,164,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="195" Text="name" Background="#FFE2DEDE"/>
