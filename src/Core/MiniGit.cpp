@@ -40,7 +40,8 @@ int cmd_launch(char **args) {
     }
     commandLine[0] = toupper(commandLine[0]);
 
-
+    //std::cout << commandLine << std::endl;
+    //Sleep(3000);
 
     /* Get full path of the currently executing executable
     char MiniGitPath[256] = {'\0'};
@@ -124,7 +125,7 @@ int cmd_execute(int argc, char** args) {
     return EXIT_FAILURE;
 }
 
-
+char nargv[256];
 int main(int argc, char **argv) {
 
     // Re-add double quotation marks
@@ -138,7 +139,7 @@ int main(int argc, char **argv) {
         }
 
         if (need_dq) {
-            char nargv[256];
+            //char nargv[256];
             nargv[0] = '"';
             strcpy(nargv + 1, argv[i]);
             nargv[j + 1] = '"';
@@ -147,6 +148,5 @@ int main(int argc, char **argv) {
         need_dq = false;
         i++;
     }
-
     return cmd_execute(argc, argv);
 }
