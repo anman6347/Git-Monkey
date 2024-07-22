@@ -16,6 +16,7 @@ const char* builtin_str[] = {
     "log",
     "status",
     "upload",
+    "commitLog",
 };
 
 // return the number of built-in commands
