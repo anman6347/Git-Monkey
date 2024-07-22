@@ -28,6 +28,9 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        if (cur_dir == "") {
+            MSGBOX.Content = "管理するフォルダを選択してください.";
+        }
     }
 
     /// <summary>
@@ -74,10 +77,44 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// git reset
+    /// </summary>
     private void Button_Click_Reset(object sender, RoutedEventArgs e)
     {
         if (CommitList.SelectedItem != null) {
             MSGBOX.Content = CommitList.SelectedItem.ToString();
         }
+    }
+
+    /// <summary>
+    /// git add & commit
+    /// </summary>
+    private void Button_Click_Commit(object sender, RoutedEventArgs e)
+    {
+        // string author = AuthorText.Text;
+        // string email = EmailText.Text;
+        string commit_message = CommitMsgText.Text;
+        commit_message = "\"" + commit_message + "\"";
+
+        string[] args1 = {cur_dir, "MiniGit", "add", "-A"};
+        string[] args2 = {cur_dir, "MiniGit", "commit", "-m", commit_message};
+        MSGBOX.Content = commit_message;
+        AwaitProcess("..\\Core\\Wrapper.exe", args1);
+        AwaitProcess("..\\Core\\Wrapper.exe", args2);
+    }
+
+    private int AwaitProcess(string path, string [] args)
+    {
+        var pInfo = new ProcessStartInfo(path);
+        foreach (string arg in args) {
+            pInfo.ArgumentList.Add(arg);
+        }
+
+        Process p = Process.Start(pInfo);
+        if (p != null) {
+            p.WaitForExit();
+        }
+        return p.ExitCode;
     }
 }
