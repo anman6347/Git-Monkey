@@ -33,6 +33,10 @@ public partial class MainWindow : Window
         if (cur_dir == "") {
             MSGBOX.Content = "管理するフォルダを選択してください.";
         }
+
+        // Set an icon using code
+        Uri iconUri = new Uri("..\\..\\logo\\logo_app.ico", UriKind.RelativeOrAbsolute);
+        this.Icon = BitmapFrame.Create(iconUri);
     }
 
     /// <summary>
@@ -59,24 +63,12 @@ public partial class MainWindow : Window
         cur_dir = dlg.FileName;
         DirPathLabel.Content = "Dir: " + cur_dir;
         MSGBOX.Content = "フォルダが選択されました";
-        var pInfo = new ProcessStartInfo("..\\Core\\Wrapper.exe")
-        {
-            ArgumentList =
-            {
-                cur_dir,
-                "MiniGit",
-                "init"
-            }
-        };
-        Process p = Process.Start(pInfo);
-        if (p != null) {
-            p.WaitForExit();
-        }
-        int code = p.ExitCode;
 
+        string[] args = {cur_dir, "MiniGit", "init"};
+        int exitcode = AwaitProcess("..\\Core\\Wrapper.exe", args);
 
         // コミット履歴の表示
-        if (code == 183) {      // .git が既に存在
+        if (exitcode == 183) {      // .git が既に存在
             StreamReader sr = new StreamReader(cur_dir + "\\.git\\logs\\HEAD", Encoding.GetEncoding("UTF-8"));
             int i = 0;
             while (sr.Peek() != -1) {
@@ -119,6 +111,20 @@ public partial class MainWindow : Window
         MSGBOX.Content = commit_message;
         AwaitProcess("..\\Core\\Wrapper.exe", args1);
         AwaitProcess("..\\Core\\Wrapper.exe", args2);
+
+        CommitList.Items.Clear();
+        StreamReader sr = new StreamReader(cur_dir + "\\.git\\logs\\HEAD", Encoding.GetEncoding("UTF-8"));
+            int i = 0;
+            while (sr.Peek() != -1) {
+                string line = sr.ReadLine();
+                string[] commit_log = line.Split(' ');
+                commit_sha1_list[i] = commit_log[1];
+                i++;
+                long ret = long.Parse(commit_log[4]);
+                DateTime datetime = new DateTime(1970, 1, 1);
+                CommitList.Items.Add(datetime.AddSeconds(ret).ToLocalTime() + "   " + commit_log[commit_log.Length - 1]);
+            }
+        sr.Close();
     }
 
     /// <summary>
@@ -134,6 +140,7 @@ public partial class MainWindow : Window
     private int AwaitProcess(string path, string [] args)
     {
         var pInfo = new ProcessStartInfo(path);
+        pInfo.CreateNoWindow = true;  // disable displaying console
         foreach (string arg in args) {
             pInfo.ArgumentList.Add(arg);
         }
