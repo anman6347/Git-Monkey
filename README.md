@@ -17,7 +17,7 @@
         <ol type="i" style="inside">
         <li><a href="#about-the-project">About The Project</a></li>
         <li><a href="#getting-started">Getting Started</a></li>
-        <li><a href="#usage">Usage</a></li>
+        <!-- <li><a href="#usage">Usage</a></li> -->
         <li><a href="#roadmap">Roadmap</a></li>
         <li><a href="#license">License</a></li>
         </ol>
@@ -37,6 +37,11 @@ Git-Monkey is simple Git for non-programmers.
 <img alt="Static Badge" src="https://img.shields.io/badge/.NET-8-purple?logo=.net&logoColor=512BD4">
 <br/>
 
+#### Third party libraries
+- [zlib 1.3.1](https://www.zlib.net/)
+- [libcurl 8.8.0](https://curl.se/download.html)
+- [jsoncpp 1.9.0](https://github.com/open-source-parsers/jsoncpp)
+
 <!-- GETTING STARTED -->
 ## Getting Started
 
@@ -45,17 +50,29 @@ Git-Monkey is simple Git for non-programmers.
     ```sh
     git clone git@github.com:your_username_/Git-Monkey.git
     ```
-🚧 WIP 🚧
+
+2. Install above third party libraries, and set them in `.\src\Core` directory. You can build those libraries with cmake.
+
+3. go to `.\src\Core` and make.
+    ```sh
+    make
+    ```
+
+4. got to `.\src\Git-Monkey` and build with dotnet.
+    ```sh
+    dotnet run
+    ```
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
-<!-- USAGE EXAMPLES -->
+<!-- USAGE EXAMPLES 
 ## Usage
 🚧 WIP 🚧
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
+-->
 
 
 <!-- ROADMAP -->
