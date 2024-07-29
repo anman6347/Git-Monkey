@@ -26,7 +26,7 @@ inline int next_cur(int &cur)
 int CUR_IDX::get_entries()
 {
     std::ifstream ifs;
-    ifs.open(current_index_path, std::ios::in);
+    ifs.open(current_index_path, std::ios::in | std::ios::binary);
     if (ifs.fail()) {
         std::cerr << "Failed to open Index." << std::endl;
         return EXIT_FAILURE;
