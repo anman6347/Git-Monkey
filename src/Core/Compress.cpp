@@ -228,3 +228,58 @@ void do_compress2(std::vector<unsigned char> &in, const char *out_file){
     return;
 }
 
+
+// 展開（復元）
+void do_decompress2(const char *in_file, std::vector<unsigned char> &out){
+    unsigned char inbuf[INBUFSIZ];           // 入力バッファ
+    unsigned char *outbuf = out.data();
+    char err_msg[250];
+    FILE *fin;       // 入力・出力ファイル
+    int count, status;
+    z_stream z;             // ライブラリとやりとりするための構造体
+    if (!(fin = fopen(in_file, "rb"))) return;
+
+    // すべてのメモリ管理をライブラリに任せる
+    z.zalloc = Z_NULL;
+    z.zfree = Z_NULL;
+    z.opaque = Z_NULL;
+
+    // 初期化
+    z.next_in = Z_NULL;
+    z.avail_in = 0;
+    if (inflateInit(&z) != Z_OK) {
+            sprintf(err_msg, "展開初期化エラー（inflateInit関数）: %s\n", (z.msg) ? z.msg : "???");
+            fclose(fin);
+            return;
+    }
+
+    z.next_out = outbuf;            // 出力ポインタ
+    z.avail_out = OUTBUFSIZ;        // 出力バッファ残量
+    status = Z_OK;
+
+    while (status != Z_STREAM_END) {
+            if (z.avail_in == 0) {  // 入力残量がゼロになれば
+                    z.next_in = inbuf;      // 入力ポインタを元に戻す
+                    z.avail_in = fread(inbuf, 1, INBUFSIZ, fin); // データを読む
+            }
+            status = inflate(&z, Z_NO_FLUSH); // 展開
+            if (status == Z_STREAM_END) break; // 完了
+            if (status != Z_OK) {   // エラー
+                    sprintf(err_msg, "展開エラー（inflate関数）: %s\n", (z.msg) ? z.msg : "???");
+                    fclose(fin);
+                    return;
+            }
+            if (z.avail_out == 0) { // 出力バッファが尽きれば
+                    z.avail_out = OUTBUFSIZ; // 出力バッファ残量を元に戻す
+            }
+    }
+
+    // 後始末
+    if (inflateEnd(&z) != Z_OK) {
+            sprintf(err_msg, "展開終了エラー（inflateEnd関数）: %s\n", (z.msg) ? z.msg : "???");
+            fclose(fin);
+            return;
+    }
+    fclose(fin);
+    return;
+}

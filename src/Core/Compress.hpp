@@ -15,5 +15,7 @@ void do_compress(const char *in_file, const char *out_file);
 void do_decompress(char *in_file, char *out_file);
 // 圧縮
 void do_compress2(std::vector<unsigned char> &in, const char *out_file);
+// 展開（復元）
+void do_decompress2(const char *in_file, std::vector<unsigned char> &out);
 
 #endif

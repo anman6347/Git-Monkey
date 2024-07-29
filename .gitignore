@@ -11,6 +11,7 @@ src/Core/curl-8.8.0_3-win64-mingw
 src/Core/libcurl-x64.dll
 src/Core/jsoncpp-1.9.0
 src/Core/.env
+src/Core/latex
 
 *.o
 *.exe

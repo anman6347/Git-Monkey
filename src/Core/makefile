@@ -10,7 +10,7 @@ LIBDIR2 = .\\curl-8.8.0_3-win64-mingw\\lib
 LIBDIR3 = .\\jsoncpp-1.9.0\\build\\src\\lib_json
 SRCS = MiniGit.cpp Add.cpp Init.cpp Commit.cpp Wrapper.cpp Upload.cpp
 TARGET := $(SRCS:%.cpp=%.exe)
-SRCS +=  Crypt.cpp Index.cpp FileTree.cpp CommitObj.cpp Compress.cpp
+SRCS +=  Crypt.cpp Index.cpp FileTree.cpp CommitObj.cpp Compress.cpp GitFile.cpp Blob.cpp Tree.cpp
 OBJS = $(SRCS:%.cpp=%.o)
 
 #comma:= ,
@@ -42,15 +42,16 @@ Init.exe: Init.o
 	$(CXX) $(CXXFLAGS) $^ -o $@
 
 # -lws2_32 is required windows 10 ?
-Add.exe: Add.o Crypt.o Compress.o
+Add.exe: Add.o Crypt.o Compress.o GitFile.o Blob.o 
 	$(CXX) $(CXXFLAGS) -L $(LIBDIR1) $^ -o $@ -lbcrypt -lz -lws2_32
 
-Commit.exe: Commit.o Crypt.o Index.o FileTree.o CommitObj.o Compress.o
+Commit.exe: Commit.o Crypt.o Index.o FileTree.o CommitObj.o Compress.o GitFile.o Tree.o
 	$(CXX) $(CXXFLAGS) -L $(LIBDIR1) $^ -o $@ -lbcrypt -lz -lws2_32
 
-#run: $(TARGET)
-#	cd ..\test_tmp_dir2 && ..\Xass\MiniGit.exe init && ..\Xass\MiniGit.exe add -A && ..\Xass\MiniGit.exe commit -m "test commit 1" && echo Hi! >> aabbcc.txt && ..\Xass\MiniGit.exe add -A && ..\Xass\MiniGit.exe commit -m "test commit 2" && cd ..\Xass
+run: $(TARGET)
+	cd ..\test_dir_4 && ..\Core\MiniGit.exe init && ..\Core\MiniGit.exe add -A && ..\Core\MiniGit.exe commit -m "test commit 1"
+# && echo Hi! >> aabbcc.txt && ..\Core\MiniGit.exe add -A && ..\Core\MiniGit.exe commit -m "test commit 2" && cd ..\Core
 
 clean:
 	del $(TARGET) $(OBJS)
-#	rmdir /s /q ..\test_tmp_dir2\.git
+	rmdir /s /q ..\test_dir_4\.git
